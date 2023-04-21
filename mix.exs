@@ -28,7 +28,8 @@ defmodule DomaOAuth.MixProject do
     [
       {:ueberauth, "~> 0.10.5"},
       {:ueberauth_google, "~> 0.10.2"},
-      {:ueberauth_github, "~> 0.8.2"}
+      {:ueberauth_github, "~> 0.8.2"},
+      {:jason, "~> 1.4"}
     ]
   end
 end

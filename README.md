@@ -2,6 +2,9 @@
 
 Set of routes / plugs that provides easy integration of Google and Github oAuth into an Elixir application.
 
+It is designed to be as light as possible, all this Authentication plug does is assign an `oauth` field
+To your `Plug.Conn` struct, so that the rest of the logic is up to your application to implement as a callback.
+
 ## Usage
 
 To use in your project a bit of configuration is needed.
@@ -23,19 +26,18 @@ config :ueberauth, Ueberauth.Strategy.Google.OAuth,
   client_secret: System.get_env("GOOGLE_CLIENT_SECRET")
 ```
 
-After configuration is set, the next step is to add OAuth routes to your router:
+After configuration is set, the next step is to add OAuth routes to your router
+And specify the 2 arity callback function that will finalize the response.
 
 ```elixir
 use Plug.Router
-use DomaOAuth
+use DomaOAuth, callback: &MyModule.callback/2
 ```
 
-This will extend your router with four additional routes (two per integration) that will be used to perform OAuth process.
+This will extend your router with two additional routes (one per integration) that will be used to perform OAuth process.
 By default routes will start with `/auth` prefix. So the routes will be like following:
 ```
-/auth/google
 /auth/google/callback
-/auth/github
 /auth/github/callback
 ```
 
