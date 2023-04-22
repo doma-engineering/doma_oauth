@@ -3,7 +3,7 @@
 Set of routes / plugs that provides easy integration of Google and Github oAuth into an Elixir application.
 
 It is designed to be as light as possible, all this Authentication plug does is assign an `oauth` field
-To your `Plug.Conn` struct, so that the rest of the logic is up to your application to implement as a callback.
+To your `%Plug.Conn{}` struct, so that the rest of the logic is up to your application to implement as a callback.
 
 ## Usage
 
@@ -27,11 +27,20 @@ config :ueberauth, Ueberauth.Strategy.Google.OAuth,
 ```
 
 After configuration is set, the next step is to add OAuth routes to your router
+and to add an Ueberauth plug between :match and :dispatch plugs
 And specify the 2 arity callback function that will finalize the response.
 
 ```elixir
 use Plug.Router
-use DomaOAuth, callback: &MyModule.callback/2
+
+plug :match
+plug Ueberauth
+plug :dispatch
+
+get("/auth/:provider/callback",
+  to: DomaOAuth,
+  init_opts: %{callback: &YourApp.CallbackModule.call/2}
+)
 ```
 
 This will extend your router with two additional routes (one per integration) that will be used to perform OAuth process.
@@ -46,6 +55,7 @@ This can be changed by configuring `ueberauth`:
 ```elixir
 config :ueberauth, Ueberauth,
   # default is "/auth"
+  # note, that this path needs to match with the one you specified in the router for the callback
   base_path: "/oauth",
 ```
 
@@ -57,7 +67,7 @@ by adding `doma_oauth` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:doma_oauth, "~> 0.1.0"}
+    {:doma_oauth, git: "https://github.com/doma-engineering/doma_oauth", branch: "main"}
   ]
 end
 ```
