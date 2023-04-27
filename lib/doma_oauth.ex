@@ -10,6 +10,10 @@ defmodule DomaOAuth do
 
   alias DomaOAuth.Authentication.{Success, Failure}
 
+  def hash(string) do
+    :blake2s |> :crypto.hash(string) |> Base.url_encode64()
+  end
+
   def init(opts), do: opts
 
   def call(%{assigns: %{ueberauth_auth: %Ueberauth.Auth{} = auth}} = conn, opts) do
@@ -33,7 +37,7 @@ defmodule DomaOAuth do
   defp success(%Ueberauth.Auth{provider: :google, info: %{email: email}})
        when not is_nil(email) and email != "" do
     identity = "#{email}@google.com"
-    hashed_identity = blake2_hash(identity)
+    hashed_identity = hash(identity)
 
     %Success{identity: identity, hashed_identity: hashed_identity}
   end
@@ -41,7 +45,7 @@ defmodule DomaOAuth do
   defp success(%Ueberauth.Auth{provider: :github, info: %{nickname: nickname}})
        when not is_nil(nickname) and nickname != "" do
     identity = "#{nickname}@github.com"
-    hashed_identity = blake2_hash(identity)
+    hashed_identity = hash(identity)
 
     %Success{identity: identity, hashed_identity: hashed_identity}
   end
@@ -64,10 +68,6 @@ defmodule DomaOAuth do
 
   defp failure(errors) do
     %Failure{errors: errors}
-  end
-
-  defp blake2_hash(string) do
-    :blake2s |> :crypto.hash(string) |> Base.url_encode64()
   end
 
   defp extract_error_messages(errors) do

@@ -76,8 +76,7 @@ defmodule DomaOAuthTest do
       assert %Success{hashed_identity: hashed_identity, identity: ^expected_identity} =
                conn.assigns[:oauth]
 
-      assert hashed_identity ===
-               :blake2s |> :crypto.hash(expected_identity) |> Base.url_encode64()
+      assert hashed_identity === DomaOAuth.hash(expected_identity)
     end
 
     test "assaigns a Failure and logs error when nickname isn't provided in response from Github" do
