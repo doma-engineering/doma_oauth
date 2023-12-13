@@ -59,6 +59,20 @@ config :ueberauth, Ueberauth,
   base_path: "/oauth",
 ```
 
+It is important to make all information about request available in headers (via X-Forwarded-*) headers if using a reverse-proxy, this is a working example for Nginx:
+
+```nginx
+location / {
+  proxy_pass http://127.0.0.1:4001;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Host $host;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  ...
+}
+```
+
+The reason for is that redirect uri will be inferred by using those headers. See [this link](https://github.com/ueberauth/ueberauth/issues/65#issuecomment-367263067) for more details.
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
