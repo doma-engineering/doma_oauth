@@ -10,15 +10,21 @@ defmodule DomaOAuth do
 
   alias DomaOAuth.Authentication.{Success, Failure}
 
-  def hash(string) do
-    :blake2s |> :crypto.hash(string) |> Base.url_encode64()
+  def hash(string, opts \\ []) do
+    hashed = :blake2s |> :crypto.hash(string)
+
+    if opts[:dns_safe] do
+      DomaOAuth.Base58.encode(hashed)
+    else
+      Base.url_encode64(hashed)
+    end
   end
 
   def init(opts), do: opts
 
   def call(%{assigns: %{ueberauth_auth: %Ueberauth.Auth{} = auth}} = conn, opts) do
     conn
-    |> assign(:oauth, success(auth))
+    |> assign(:oauth, success(auth, opts))
     |> call_the_callback(opts)
   end
 
@@ -34,23 +40,23 @@ defmodule DomaOAuth do
     callback.(conn, opts)
   end
 
-  defp success(%Ueberauth.Auth{provider: :google, info: %{email: email}})
+  defp success(%Ueberauth.Auth{provider: :google, info: %{email: email}}, opts)
        when not is_nil(email) and email != "" do
     identity = "#{email}@google.com"
-    hashed_identity = hash(identity)
+    hashed_identity = hash(identity, opts)
 
     %Success{identity: identity, hashed_identity: hashed_identity}
   end
 
-  defp success(%Ueberauth.Auth{provider: :github, info: %{nickname: nickname}})
+  defp success(%Ueberauth.Auth{provider: :github, info: %{nickname: nickname}}, opts)
        when not is_nil(nickname) and nickname != "" do
     identity = "#{nickname}@github.com"
-    hashed_identity = hash(identity)
+    hashed_identity = hash(identity, opts)
 
     %Success{identity: identity, hashed_identity: hashed_identity}
   end
 
-  defp success(%Ueberauth.Auth{provider: :google, uid: uid}) do
+  defp success(%Ueberauth.Auth{provider: :google, uid: uid}, _opts) do
     Logger.error(
       "[#{__MODULE__}] Can't collect an email from Google's response! Auth uid: #{uid}."
     )
@@ -58,7 +64,7 @@ defmodule DomaOAuth do
     %Failure{errors: ["Email isn't provided in response from Google"]}
   end
 
-  defp success(%Ueberauth.Auth{provider: :github, uid: uid}) do
+  defp success(%Ueberauth.Auth{provider: :github, uid: uid}, _opts) do
     Logger.error(
       "[#{__MODULE__}] Can't collect a nickname from GitHub's response! Auth uid: #{uid}."
     )
